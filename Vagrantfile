@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
     #apt-get install -y git golang
     #rm -rf packer-builder-arm *>/dev/null
 
-    #git clone https://github.com/mkaczanowski/packer-builder-arm
+    #git clone https://github.com/brederle/packer-plugin-armflash
     #cd packer-builder-arm
     #go mod download
     #go build
