@@ -17,6 +17,7 @@
 *.xz
 
 # Cache
+.config
 .packer_cache
 .packer_plugins
 packer_cache

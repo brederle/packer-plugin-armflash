@@ -1,4 +1,4 @@
-# Packer builder ARM
+# Packer builder for ARM flash images
 
 [![Build Status][github-badge]][github]
 [![GoDoc][godoc-badge]][godoc]

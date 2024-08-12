@@ -6,12 +6,12 @@ import (
 )
 
 func main() {
-	server, err := plugin.Server()
-	if err != nil {
-		panic(err)
-	}
-	if err := server.RegisterBuilder(builder.NewBuilder()); err != nil {
-		panic(err)
-	}
-	server.Serve()
+    pluginSet := plugin.NewSet()
+	pluginSet.RegisterBuilder(plugin.DEFAULT_NAME, builder.NewBuilder())
+    //pluginSet.RegisterPostProcessor("flasher", flasher.newPostProcessor())
+    err := pluginSet.Run()
+    if err != nil {
+        fmt.Fprintln(os.Stderr, err.Error())
+        os.Exit(1)
+    }
 }

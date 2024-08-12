@@ -1,3 +1,5 @@
+ARG ARMFLASH_VERSION=1.1.0
+
 # Source for qemu-user-static >7.0
 FROM public.ecr.aws/ubuntu/ubuntu:lunar as qemu_binaries
 
@@ -30,18 +32,19 @@ WORKDIR /build
 
 COPY . .
 
-RUN go build -o packer-builder-arm
+RUN go build -o packer-plugin-armflash_v${ARMFLASH_VERSION}
 
-ENV PACKER_VERSION 1.10.0
+ENV PACKER_VERSION 1.11.2
 
 RUN if [ "$(uname -m)" = "aarch64" ]; then PACKER_ARCH="arm64"; else PACKER_ARCH="amd64"; fi && \
   wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_${PACKER_ARCH}.zip -q -O /tmp/packer.zip && \
-  unzip /tmp/packer.zip -d /bin && \
-  chmod +x /bin/packer && \
-  rm /tmp/packer.zip
+  unzip /tmp/packer.zip && \
+  chmod +x packer && \
+  rm /tmp/packer.zip && \
+  upx-ucl --lzma packer
 
 # COMPRESS WITH UPX
-RUN upx-ucl --lzma /build/packer-builder-arm /bin/packer
+RUN 
 
 FROM public.ecr.aws/lts/ubuntu:jammy
 
@@ -59,19 +62,24 @@ RUN apt-get update -qq \
   qemu-utils \
   sudo \
   xz-utils \
+ && mkdir -p /.packer \
  && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /build
+WORKDIR /.packer
 
 COPY docker/entrypoint.sh /entrypoint.sh
-COPY --from=builder /build/packer-builder-arm /bin/packer /bin/
+COPY --from=builder /build/packer /bin/
 COPY --from=qemu_binaries /binaries/* /usr/bin/
+
+RUN --mount=type=bind,from=builder,source=/build \
+  packer plugins install /build/packer-plugin-armflash_v${ARMFLASH_VERSION} github.com/brederle/armflash
 
 # Enable detailed logging
 ENV PACKER_LOG=1
 
 # Enable plugin / download caching for consecutive runs
-ENV PACKER_PLUGIN_PATH="/bin:/build/.packer_plugins"
-ENV PACKER_CACHE_DIR="/build/.packer_cache"
+ENV PACKER_ENV="/.packer/config"
+ENV PACKER_PLUGIN_PATH="/.packer/plugins"
+ENV PACKER_CACHE_DIR="/.packer/cache"
 
 ENTRYPOINT ["/entrypoint.sh"]
