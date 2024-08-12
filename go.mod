@@ -1,4 +1,4 @@
-module github.com/mkaczanowski/packer-builder-arm
+module github.com/brederle/packer-plugin-armflash
 
 go 1.20
 
