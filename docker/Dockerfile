@@ -1,19 +1,3 @@
-# Source for qemu-user-static >7.0
-FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS qemu_binaries
-
-# hadolint ignore=DL3008
-RUN apt-get update -qq \
- && apt-get install -qqy --no-install-recommends qemu-user-static
-
-RUN mkdir -p /binaries && \
-    if [ "$(uname -m)" = "aarch64" ]; then \
-        cp /usr/bin/qemu-arm-static /binaries/; \
-        cp /usr/bin/qemu-x86_64-static /binaries/; \
-    else \
-        cp /usr/bin/qemu-aarch64-static /binaries/; \
-        cp /usr/bin/qemu-arm-static /binaries/; \
-    fi
-
 FROM --platform=$BUILDPLATFORM golang:1.23-bookworm AS builder
 ARG ARMFLASH_PLUGIN_VERSION=1.1.1
 
@@ -58,13 +42,13 @@ FROM --platform=$BUILDPLATFORM debian:bookworm-slim
 ENV PACKER_LOG=1
 
 # Enable plugin / download caching for consecutive runs
-ENV PACKER_ENV="/.packer/config"
 ENV PACKER_PLUGIN_PATH="/.packer/plugins"
 ENV PACKER_CACHE_DIR="/.packer/cache"
 
 # hadolint ignore=DL3008
 RUN apt-get update -qq \
- && apt-get install -qqy --no-install-recommends \
+ && apt-get install -qqy --no-install-recommends \ 
+  qemu-user-static \
   ca-certificates \
   dosfstools \
   fdisk \
@@ -76,6 +60,7 @@ RUN apt-get update -qq \
   qemu-utils \
   sudo \
   xz-utils \
+  binfmt-support \
  && mkdir -p /.packer ${PACKER_ENV} ${PACKER_PLUGIN_PATH} ${PACKER_CACHE_DIR} \
  && rm -rf /var/lib/apt/lists/*
 
@@ -86,8 +71,7 @@ WORKDIR /.packer
 COPY --from=builder /build/packer /bin/packer
 RUN --mount=type=bind,from=builder,source=/build,target=/build \
   /bin/packer plugins install --path /build/packer-plugin-armflash github.com/brederle/armflash
-COPY --from=qemu_binaries /binaries/* /usr/bin/
 COPY docker/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/bin/packer", "version"]
+CMD [ "sleep", "infinity" ]
