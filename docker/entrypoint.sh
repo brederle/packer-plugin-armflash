@@ -38,6 +38,7 @@ if [ "$do_qemu_setup" = true ]; then
     setup_qemu
 fi
 
+# kept for backward compatibility only; better extend baseimage with own Dockerfile 
 declare -a EXTRA_SYSTEM_PACKAGES=()
 for arg do
     shift
@@ -54,6 +55,7 @@ if [ "${#EXTRA_SYSTEM_PACKAGES[@]}" -gt 0 ]; then
     apt-get install -y --no-install-recommends "${EXTRA_SYSTEM_PACKAGES[@]}"
 fi
 
+# kept for backward compatibility only; better clean up baseimage in own Dockerfile 
 for entry in ./packer-*; do
     if [[ -x "$entry" ]]; then
         echo "Please remove $entry and try again."
@@ -63,10 +65,5 @@ done
 
 export DONT_SETUP_QEMU=1
 
-# ensure packer plugin/cache directories exist
-mkdir -p "${PACKER_PLUGIN_PATH}"
-mkdir -p "${PACKER_CACHE_DIR}"
-
-echo running "${PACKER}" "${@}"
-
-exec "${PACKER}" "${@}"
+# allow any command to be executed
+exec "${@}"

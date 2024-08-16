@@ -2,9 +2,9 @@
     "name": "ArmFlashPacker",
     "build": {
         "context": "..",
-        "dockerfile" : "../docker/Dockerfile"
+        "dockerfile": "../docker/Dockerfile"
     },
     "privileged": true,
-    "runArgs": [ "-v", "/dev:/dev", "version"],
+    "runArgs": [ "-v", "/dev:/dev" ],
     "overrideCommand": true
 }
