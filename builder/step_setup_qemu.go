@@ -18,7 +18,11 @@ func checkBinfmtMisc(srcPath string) (string, error) {
 		return "", fmt.Errorf("failed to read /proc/sys/fs/binfmt_misc directory: %v", err)
 	}
 
-	srcPathStat, _ := os.Stat(srcPath)
+	srcFileInfo, err := os.Stat(srcPath)
+	if os.IsNotExist(err) {
+		return "", fmt.Errorf("Source qemu not found: %s", srcPath)
+	}
+
 	for _, file := range files {
 		if file.Name() == "register" || file.Name() == "status" {
 			continue
@@ -37,16 +41,22 @@ func checkBinfmtMisc(srcPath string) (string, error) {
 			}
 
 			if fields[0] == "interpreter" {
-				fieldStat, _ := os.Stat(fields[1])
-				// os.SameFile allows also comparing of sym- and relative symlinks.
-				if os.SameFile(fieldStat, srcPathStat) {
+				// Check the original path
+				refFileInfo, err := os.Stat(fields[1])
+				if err == nil && os.SameFile(srcFileInfo, refFileInfo) {
+					return pth, nil
+				}
+
+				// Check the path with "-static" suffix
+				refStaticFileInfo, err := os.Stat(fields[1] + "-static")
+				if err == nil && os.SameFile(srcFileInfo, refStaticFileInfo) {
 					return pth, nil
 				}
 			}
 		}
 	}
 
-	return "", fmt.Errorf("Failed to find binfmt_misc for %s under /proc/sys/fs/binfmt_misc", srcPath)
+	return "", fmt.Errorf("Failed to find predefined qemu binfmt for %s under /proc/sys/fs/binfmt_misc", srcPath)
 }
 
 // StepSetupQemu configures chroot environment to run binaries via qemu
