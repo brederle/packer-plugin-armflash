@@ -38,8 +38,8 @@ RUN go build -ldflags="-s -w -X 'version.Version=$ARMFLASH_PLUGIN_VERSION'" -o p
 
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim
 
-# Enable detailed logging
-ENV PACKER_LOG=1
+# Disable detailed logging, enable for debug with PACKER_LOG=1
+ENV PACKER_LOG=0
 
 # Enable plugin / download caching for consecutive runs
 ENV PACKER_PLUGIN_PATH="/.packer/plugins"
